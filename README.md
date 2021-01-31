@@ -1,8 +1,6 @@
-# global-diabetes-targets
-Estimated impact of increased screening, treatment, and control of diabetes mellitus among low- and middle-income countries: A microsimulation model
+# Estimated impact of increased screening, treatment, and control of diabetes mellitus among low- and middle-income countries: A microsimulation model
 
-
-Sanjay Basu1,2,3,4*, Jen Manne-Goehler, Sebastian Vollmer, Justine Davies
+Sanjay Basu1,2,3,4, Jen Manne-Goehler, Sebastian Vollmer, Justine Davies
 
 1 Center for Primary Care, Harvard Medical School, Boston, Massachusetts
 
@@ -13,7 +11,7 @@ Sanjay Basu1,2,3,4*, Jen Manne-Goehler, Sebastian Vollmer, Justine Davies
 4 Research and Population Health, Collective Health, San Francisco, California
 
 
-* to whom correspondence should be addressed:
+
 
 635 Huntington Avenue
 

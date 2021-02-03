@@ -57,7 +57,7 @@ dfsub =  dfsub %>%
          csmoke = as.factor(csmoke),
          bg_med = as.factor(bg_med),
          und_dia = as.factor(und_dia),
-         clin_dia = as.factor(clin_dia),
+         dx_dia = 1-und_dia,
          mi = as.factor(mi),
          statin = as.factor(statin),
          und_hypt = as.factor(und_hypt),
@@ -69,11 +69,17 @@ dfimp$hba1c_m = 10.929*(dfimp$hba1c_p -2.15)
 dfimp$tchol_mgdl = dfimp$tchol_mmoll*38.67
 dfimp$hdl_mgdl = dfimp$hdl_mmoll*38.67
 dfimp$ldl_mmoll = dfimp$ldl_mgdl*.02586
+dfimp =dfimp %>% mutate(diagnosed_dx = 1-as.numeric(und_dia))
+dfimp$diagnosed_dx = as.factor(dfimp$diagnosed_dx+1)
 
 dfimp[varsToFactor] <- lapply(dfimp[varsToFactor], factor)
-vars =c("sex", "age", "hypt_med", "sbp_avg", "dbp_avg", "dia_med", "insulin", "fbg", "bmi", "csmoke", "hba1c_m", "hba1c_p", "bg_med", "und_dia", "clin_dia", "tchol_mmoll", "tchol_mgdl", "hdl_mmoll", "hdl_mgdl", "ldl_mgdl", "ldl_mmoll",
+vars =c("sex", "age", "hypt_med", "sbp_avg", "dbp_avg", "dia_med", "insulin", "fbg", "bmi", "csmoke", "hba1c_m", "hba1c_p", "bg_med", "diagnosed_dx", "clin_dia", "tchol_mmoll", "tchol_mgdl", "hdl_mmoll", "hdl_mgdl", "ldl_mgdl", "ldl_mmoll",
   "mi", "statin", "und_hypt", "clin_hypt", "any_med")
+tableTwo <- CreateTableOne(vars = vars, data = dfimp, strata="Region")
+print(tableTwo, nonnormal = c("age", "sbp_avg", "dbp_avg","fbg", "fbp", "bmi", "hba1c_p", "hba1c_m", "tchol_mmoll", "tchol_mgdl", "hdl_mmoll", "hdl_mgdl", "ldl_mgdl", "ldl_mmoll"), quote=T)
 tableTwo <- CreateTableOne(vars = vars, data = dfimp, strata="Country")
+print(tableTwo, nonnormal = c("age", "sbp_avg", "dbp_avg","fbg", "fbp", "bmi", "hba1c_p", "hba1c_m", "tchol_mmoll", "tchol_mgdl", "hdl_mmoll", "hdl_mgdl", "ldl_mgdl", "ldl_mmoll"), quote=T)
+tableTwo <- CreateTableOne(vars = vars, data = dfimp)
 print(tableTwo, nonnormal = c("age", "sbp_avg", "dbp_avg","fbg", "fbp", "bmi", "hba1c_p", "hba1c_m", "tchol_mmoll", "tchol_mgdl", "hdl_mmoll", "hdl_mgdl", "ldl_mgdl", "ldl_mmoll"), quote=T)
 
 
@@ -261,6 +267,22 @@ sjt.xtab(dfimp$age>40, dfimp$statin==1,show.cell.prc = T) # 0.3% above 40 yrs ol
 sjt.xtab(dfimp$bprx, dfimp$sbp_avg<=130,show.cell.prc = T) # 8.4% HTN control
 sjt.xtab(dfimp$hba1c_p<=7, dfimp$oralrx,show.cell.prc = T) # 14.3% A1c control
 
+dfimp %>%
+  summarise(n_dm = n(),
+            n_bprx = sum(bprx==1),
+            n_dmrx = sum(oralrx==1),
+            n_strx = sum(statin==1),
+            n_htn  = sum(sbp_avg>130 | dbp_avg>80),
+            n_hba1c7  = sum(hba1c_p>7  | fbg>=7),
+            n_age40 = sum(age>40),
+            dx_rate = sum(und_dia==0)/n(),
+            treated_bp  = sum(bprx)/n_htn,
+            treated_dm = sum(oralrx)/n(),
+            treated_st = sum(statin==1)/sum(age>40),
+            control_bp = sum(sbp_avg<130 & dbp_avg<80 & bprx==1)/max(1,sum(bprx)),
+            control_dm = sum((hba1c_p<=7 | fbg<7) & oralrx==1)/max(1,sum(oralrx))) %>%
+  select(n_dm, n_bprx, n_dmrx, n_strx, n_htn, n_hba1c7, n_age40,
+         dx_rate,treated_bp, treated_dm, treated_st,  control_bp, control_dm)
 
 currrates = dfimp %>%
   group_by(Country) %>%
@@ -268,17 +290,17 @@ currrates = dfimp %>%
             n_bprx = sum(bprx==1),
             n_dmrx = sum(oralrx==1),
             n_strx = sum(statin==1),
-            n_sbp130  = sum(sbp_avg>130),
-            n_hba1c7  = sum(hba1c_p>7),
+            n_htn  = sum(sbp_avg>130 | dbp_avg>80),
+            n_hba1c7  = sum(hba1c_p>7  | fbg>=7),
             n_age40 = sum(age>40),
             dx_rate = sum(und_dia==0)/n(),
-            treated_bp  = sum(bprx)/sum(sbp_avg>130),
+            treated_bp  = sum(bprx)/n_htn,
             treated_dm = sum(oralrx)/n(),
             treated_st = sum(statin==1)/sum(age>40),
-            control_bp = sum(sbp_avg<=130 & bprx==1)/max(1,sum(bprx)),
-            control_dm = sum(hba1c_p<=7 & oralrx==1)/max(1,sum(oralrx))) %>%
+            control_bp = sum(sbp_avg<130 & dbp_avg<80 & bprx==1)/max(1,sum(bprx)),
+            control_dm = sum((hba1c_p<=7 | fbg<7) & oralrx==1)/max(1,sum(oralrx))) %>%
   select(Country,
-         n_dm, n_bprx, n_dmrx, n_strx, n_sbp130, n_hba1c7, n_age40,
+         n_dm, n_bprx, n_dmrx, n_strx, n_htn, n_hba1c7, n_age40,
          dx_rate,treated_bp, treated_dm, treated_st,  control_bp, control_dm)
 
 currrates_r = dfimp %>%
@@ -287,17 +309,17 @@ currrates_r = dfimp %>%
             n_bprx = sum(bprx==1),
             n_dmrx = sum(oralrx==1),
             n_strx = sum(statin==1),
-            n_sbp130  = sum(sbp_avg>130),
-            n_hba1c7  = sum(hba1c_p>7),
+            n_htn  = sum(sbp_avg>130 | dbp_avg>80),
+            n_hba1c7  = sum(hba1c_p>7  | fbg>=7),
             n_age40 = sum(age>40),
             dx_rate = sum(und_dia==0)/n(),
-            treated_bp  = sum(bprx)/sum(sbp_avg>130),
+            treated_bp  = sum(bprx)/n_htn,
             treated_dm = sum(oralrx)/n(),
             treated_st = sum(statin==1)/sum(age>40),
-            control_bp = sum(sbp_avg<=130 & bprx==1)/max(1,sum(bprx)),
-            control_dm = sum(hba1c_p<=7 & oralrx==1)/max(1,sum(oralrx))) %>%
+            control_bp = sum(sbp_avg<130 & dbp_avg<80 & bprx==1)/max(1,sum(bprx)),
+            control_dm = sum((hba1c_p<=7 | fbg<7) & oralrx==1)/max(1,sum(oralrx))) %>%
   select(Region,
-         n_dm, n_bprx, n_dmrx, n_strx, n_sbp130, n_hba1c7, n_age40,
+         n_dm, n_bprx, n_dmrx, n_strx, n_htn, n_hba1c7, n_age40,
          dx_rate,treated_bp, treated_dm, treated_st,  control_bp, control_dm)
 
 

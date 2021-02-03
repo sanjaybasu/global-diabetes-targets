@@ -80,34 +80,34 @@ for (iter in 1:iters) {
   
   
   
-  dxdf$rxbpcosts_base = dxdf$bprx*dxdf$rxbp_cost*dxdf$detected
-  dxdf$rxdmcosts_base = dxdf$oralrx*dxdf$rxdm_cost*dxdf$detected
-  dxdf$rxstatincosts_base = (as.numeric(dxdf$statin)-1)*dxdf$rxstatin_cost*dxdf$detected
+  dxdf$rxbpcosts_base = dxdf$bprx*dxdf$rxbp_cost*dxdf$detected/(1.03^10)
+  dxdf$rxdmcosts_base = dxdf$oralrx*dxdf$rxdm_cost*dxdf$detected/(1.03^10)
+  dxdf$rxstatincosts_base = (as.numeric(dxdf$statin)-1)*dxdf$rxstatin_cost*dxdf$detected/(1.03^10)
   
   
   set.seed(iter)
   dxdf$cvdevents_base = rbinom(length(dxdf$cvdrisk),1,dxdf$cvdrisk/100)
-  dxdf$cvdcosts_base = dxdf$cvdevents_base*dxdf$cvdevents_cost
+  dxdf$cvdcosts_base = dxdf$cvdevents_base*dxdf$cvdevents_cost/(1.03^10)
   dxdf$cvddeaths_base = dxdf$cvdevents_base*0.2#rbinom(length(dxdf$cvdrisk),1,0.2) #20% case fatality, https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3819990/
   
   set.seed(iter)
   dxdf$chfevents_base = rbinom(length(dxdf$chfrisk),1,dxdf$chfrisk/100)
-  dxdf$chfcosts_base = dxdf$chfevents_base*dxdf$chfevents_cost
+  dxdf$chfcosts_base = dxdf$chfevents_base*dxdf$chfevents_cost/(1.03^10)
   dxdf$chfdeaths_base = dxdf$chfevents_base*0.5#rbinom(length(dxdf$chfrisk),1,0.5) #50% case fatality at 5 years, https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3033496/
   
   set.seed(iter)
   dxdf$nephevents_base = rbinom(length(dxdf$nephrisk),1,dxdf$nephrisk/100)
-  dxdf$nephcosts_base = dxdf$nephevents_base*dxdf$nephevents_cost
+  dxdf$nephcosts_base = dxdf$nephevents_base*dxdf$nephevents_cost/(1.03^10)
   dxdf$nephdeaths_base = dxdf$nephevents_base*1#rbinom(length(dxdf$nephrisk),1,1) #100% case fatality
   
   set.seed(iter)
   dxdf$retinevents_base = rbinom(length(dxdf$retinrisk),1,dxdf$retinrisk/100)
-  dxdf$retincosts_base = dxdf$retinevents_base*dxdf$retinevents_cost
+  dxdf$retincosts_base = dxdf$retinevents_base*dxdf$retinevents_cost/(1.03^10)
   dxdf$retindeaths_base = dxdf$retinevents_base*0 #rbinom(length(dxdf$retinrisk),1,0) 
   
   set.seed(iter)
   dxdf$neuroevents_base = rbinom(length(dxdf$neurorisk),1,dxdf$neurorisk/100)
-  dxdf$neurocosts_base = dxdf$neuroevents_base*dxdf$neuroevents_cost
+  dxdf$neurocosts_base = dxdf$neuroevents_base*dxdf$neuroevents_cost/(1.03^10)
   dxdf$neurodeaths_base = dxdf$neuroevents_base*0.1#rbinom(length(dxdf$neurorisk),1,0.1) #10% case fatality at 10 yrs, https://care.diabetesjournals.org/content/28/3/617#T4
   
   
@@ -119,33 +119,33 @@ for (iter in 1:iters) {
                                                       (exp(-(r+b)*dxdf$a))*(-(r+b)*dxdf$a-1))+(((1-K)/r)*(1-exp(-r*dxdf$L)))
   dxdf$YLD_cvd = D_cvd*(((K*C*(exp(r*dxdf$a)))/((r+b)^2))*(((exp(-(r+b)*(dxdf$L+dxdf$a)))*(-(r+b)*(dxdf$L+dxdf$a)-1))-
                                                              (exp(-(r+b)*dxdf$a))*(-(r+b)*dxdf$a-1))+(((1-K)/r)*(1-exp(-r*dxdf$L))))
-  dxdf$DALYS_cvd_base = (dxdf$cvddeaths_base*dxdf$YLL_cvd+dxdf$cvdevents_base*dxdf$YLD_cvd)
+  dxdf$DALYS_cvd_base = (dxdf$cvddeaths_base*dxdf$YLL_cvd+dxdf$cvdevents_base*dxdf$YLD_cvd)/(1.03^10)
   
   
   dxdf$YLL_chf = ((K*C*(exp(r*dxdf$a)))/((r+b)^2))*(((exp(-(r+b)*(dxdf$L+dxdf$a)))*(-(r+b)*(dxdf$L+dxdf$a)-1))-
                                                       (exp(-(r+b)*dxdf$a))*(-(r+b)*dxdf$a-1))+(((1-K)/r)*(1-exp(-r*dxdf$L)))
   dxdf$YLD_chf = D_chf*(((K*C*(exp(r*dxdf$a)))/((r+b)^2))*(((exp(-(r+b)*(dxdf$L+dxdf$a)))*(-(r+b)*(dxdf$L+dxdf$a)-1))-
                                                              (exp(-(r+b)*dxdf$a))*(-(r+b)*dxdf$a-1))+(((1-K)/r)*(1-exp(-r*dxdf$L))))
-  dxdf$DALYS_chf_base = (dxdf$chfdeaths_base*dxdf$YLL_chf+dxdf$chfevents_base*dxdf$YLD_chf)
+  dxdf$DALYS_chf_base = (dxdf$chfdeaths_base*dxdf$YLL_chf+dxdf$chfevents_base*dxdf$YLD_chf)/(1.03^10)
   
   dxdf$YLL_neph = ((K*C*(exp(r*dxdf$a)))/((r+b)^2))*(((exp(-(r+b)*(dxdf$L+dxdf$a)))*(-(r+b)*(dxdf$L+dxdf$a)-1))-
                                                        (exp(-(r+b)*dxdf$a))*(-(r+b)*dxdf$a-1))+(((1-K)/r)*(1-exp(-r*dxdf$L)))
   dxdf$YLD_neph = D_neph*(((K*C*(exp(r*dxdf$a)))/((r+b)^2))*(((exp(-(r+b)*(dxdf$L+dxdf$a)))*(-(r+b)*(dxdf$L+dxdf$a)-1))-
                                                                (exp(-(r+b)*dxdf$a))*(-(r+b)*dxdf$a-1))+(((1-K)/r)*(1-exp(-r*dxdf$L))))
-  dxdf$DALYS_neph_base = (dxdf$nephdeaths_base*dxdf$YLL_neph+dxdf$nephevents_base*dxdf$YLD_neph)
+  dxdf$DALYS_neph_base = (dxdf$nephdeaths_base*dxdf$YLL_neph+dxdf$nephevents_base*dxdf$YLD_neph)/(1.03^10)
   
   
   dxdf$YLL_retin = ((K*C*(exp(r*dxdf$a)))/((r+b)^2))*(((exp(-(r+b)*(dxdf$L+dxdf$a)))*(-(r+b)*(dxdf$L+dxdf$a)-1))-
                                                         (exp(-(r+b)*dxdf$a))*(-(r+b)*dxdf$a-1))+(((1-K)/r)*(1-exp(-r*dxdf$L)))
   dxdf$YLD_retin = D_retin*(((K*C*(exp(r*dxdf$a)))/((r+b)^2))*(((exp(-(r+b)*(dxdf$L+dxdf$a)))*(-(r+b)*(dxdf$L+dxdf$a)-1))-
                                                                  (exp(-(r+b)*dxdf$a))*(-(r+b)*dxdf$a-1))+(((1-K)/r)*(1-exp(-r*dxdf$L))))
-  dxdf$DALYS_retin_base = (dxdf$retindeaths_base*dxdf$YLL_retin+dxdf$retinevents_base*dxdf$YLD_retin)
+  dxdf$DALYS_retin_base = (dxdf$retindeaths_base*dxdf$YLL_retin+dxdf$retinevents_base*dxdf$YLD_retin)/(1.03^10)
   
   dxdf$YLL_neuro = ((K*C*(exp(r*dxdf$a)))/((r+b)^2))*(((exp(-(r+b)*(dxdf$L+dxdf$a)))*(-(r+b)*(dxdf$L+dxdf$a)-1))-
                                                         (exp(-(r+b)*dxdf$a))*(-(r+b)*dxdf$a-1))+(((1-K)/r)*(1-exp(-r*dxdf$L)))
   dxdf$YLD_neuro = D_neuro*(((K*C*(exp(r*dxdf$a)))/((r+b)^2))*(((exp(-(r+b)*(dxdf$L+dxdf$a)))*(-(r+b)*(dxdf$L+dxdf$a)-1))-
                                                                  (exp(-(r+b)*dxdf$a))*(-(r+b)*dxdf$a-1))+(((1-K)/r)*(1-exp(-r*dxdf$L))))
-  dxdf$DALYS_neuro_base = (dxdf$neurodeaths_base*dxdf$YLL_neuro+dxdf$neuroevents_base*dxdf$YLD_neuro)
+  dxdf$DALYS_neuro_base = (dxdf$neurodeaths_base*dxdf$YLL_neuro+dxdf$neuroevents_base*dxdf$YLD_neuro)/(1.03^10)
   
   
   
@@ -249,8 +249,8 @@ for (iter in 1:iters) {
       
       
       dxdf$rxbp0 = ((dxdf$sbp>=130) | (dxdf$dbp>=80))*dxdf$newlydetected
-      dxdf$rxstatin0 = ((dxdf$age>=40)|(dxdf$tchol>=8))*dxdf$newlydetected
-      dxdf$rxdm0 = (dxdf$a1c>=7)*dxdf$newlydetected
+      dxdf$rxstatin0 = ((dxdf$age>=40)|(dxdf$cvdrisk>20))*dxdf$newlydetected
+      dxdf$rxdm0 = ((dxdf$a1c>=7) | (dxdf$fbg>=7))*dxdf$newlydetected
       
       set.seed(iter)
       controlled = rbinom(length(dxdf$rxbp0),1,pctrl)
@@ -259,13 +259,13 @@ for (iter in 1:iters) {
       
       set.seed(iter)
       dxdf$rxbp = dxdf$rxbp0*rbinom(length(dxdf$rxbp0),1,ptreat)
-      dxdf$rxbp_costs = dxdf$rxbp*dxdf$rxbp_cost*(1*(controlled==0)+3*(controlled==1))
+      dxdf$rxbp_costs = dxdf$rxbp*dxdf$rxbp_cost*(1*(controlled==0)+3*(controlled==1))/(1.03^10)
       set.seed(iter)
       dxdf$rxdm = dxdf$rxdm0*rbinom(length(dxdf$rxdm0),1,ptreat)
-      dxdf$rxdm_costs = dxdf$rxdm*dxdf$rxdm_cost*(1*(controlledbg==0)+2.5*(controlledbg==1))
+      dxdf$rxdm_costs = dxdf$rxdm*dxdf$rxdm_cost*(1*(controlledbg==0)+2.5*(controlledbg==1))/(1.03^10)
       set.seed(iter)
       dxdf$rxstatin = dxdf$rxstatin0*rbinom(length(dxdf$rxstatin0),1,ptreat)
-      dxdf$rxstatin_costs = dxdf$rxstatin*dxdf$rxstatin_cost
+      dxdf$rxstatin_costs = dxdf$rxstatin*dxdf$rxstatin_cost/(1.03^10)
       
       bpeff = 1*(controlled==1)*3*8.8 +  0.25*(controlled==0)*4*8.8 #1 med for uncontrolled vs 3 for controlled
       dxdf$newsbp[(dxdf$sbp>=130)] = 130*controlled[dxdf$sbp>=130] + (dxdf$sbp[dxdf$sbp>=130]-bpeff[dxdf$sbp>=130])*(1-controlled[dxdf$sbp>=130])
@@ -335,43 +335,43 @@ for (iter in 1:iters) {
       
       set.seed(iter)
       dxdf$cvdevents_opt = rbinom(length(dxdf$cvdrisk),1,dxdf$cvdrisk_opt/100)  # rbinom(length(dxdf$cvdrisk_opt),1,dxdf$cvdrisk_opt/100)
-      dxdf$cvdcosts_opt = dxdf$cvdevents_opt*dxdf$cvdevents_cost
+      dxdf$cvdcosts_opt = dxdf$cvdevents_opt*dxdf$cvdevents_cost/(1.03^10)
       set.seed(iter)
       dxdf$cvddeaths_opt = dxdf$cvdevents_opt*0.2 #rbinom(length(dxdf$cvdrisk_opt),1,0.2) #20% case fatality, https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3819990/
       
       set.seed(iter)
       dxdf$chfevents_opt = rbinom(length(dxdf$chfrisk),1,dxdf$chfrisk_opt/100) #rbinom(length(dxdf$chfrisk_opt),1,dxdf$chfrisk_opt/100)
-      dxdf$chfcosts_opt = dxdf$chfevents_opt*dxdf$chfevents_cost
+      dxdf$chfcosts_opt = dxdf$chfevents_opt*dxdf$chfevents_cost/(1.03^10)
       set.seed(iter)
       dxdf$chfdeaths_opt = dxdf$chfevents_opt*0.5  # rbinom(length(dxdf$chfrisk_opt),1,0.5) #50% case fatality at 5 years, https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3033496/
       
       set.seed(iter)
       dxdf$nephevents_opt = rbinom(length(dxdf$nephrisk),1,dxdf$nephrisk_opt/100)  #rbinom(length(dxdf$nephrisk_opt),1,dxdf$nephrisk_opt/100)
-      dxdf$nephcosts_opt = dxdf$nephevents_opt*dxdf$nephevents_cost
+      dxdf$nephcosts_opt = dxdf$nephevents_opt*dxdf$nephevents_cost/(1.03^10)
       set.seed(iter)
       dxdf$nephdeaths_opt = dxdf$nephevents_opt*1 #rbinom(length(dxdf$nephrisk_opt),1,1) #100% case fatality
       
       set.seed(iter)
       dxdf$retinevents_opt = rbinom(length(dxdf$retinrisk),1,dxdf$retinrisk_opt/100)  #rbinom(length(dxdf$retinrisk_opt),1,dxdf$retinrisk_opt/100)
-      dxdf$retincosts_opt = dxdf$retinevents_opt*dxdf$retinevents_cost
+      dxdf$retincosts_opt = dxdf$retinevents_opt*dxdf$retinevents_cost/(1.03^10)
       set.seed(iter)
       dxdf$retindeaths_opt = dxdf$retinevents_opt*0 #rbinom(length(dxdf$retinrisk_opt),1,0) 
       
       set.seed(iter)
       dxdf$neuroevents_opt = rbinom(length(dxdf$neurorisk),1,dxdf$neurorisk_opt/100)  #rbinom(length(dxdf$neurorisk_opt),1,dxdf$neurorisk_opt/100)
-      dxdf$neurocosts_opt = dxdf$neuroevents_opt*dxdf$neuroevents_cost
+      dxdf$neurocosts_opt = dxdf$neuroevents_opt*dxdf$neuroevents_cost/(1.03^10)
       set.seed(iter)
       dxdf$neurodeaths_opt = dxdf$neuroevents_opt*0.1 #rbinom(length(dxdf$neurorisk_opt),1,0.1) #10% case fatality at 10 yrs, https://care.diabetesjournals.org/content/28/3/617#T4
       
-      dxdf$DALYS_cvd_opt = (dxdf$cvddeaths_opt*dxdf$YLL_cvd+dxdf$cvdevents_opt*dxdf$YLD_cvd)
+      dxdf$DALYS_cvd_opt = (dxdf$cvddeaths_opt*dxdf$YLL_cvd+dxdf$cvdevents_opt*dxdf$YLD_cvd)/(1.03^10)
       
-      dxdf$DALYS_chf_opt = (dxdf$chfdeaths_opt*dxdf$YLL_chf+dxdf$chfevents_opt*dxdf$YLD_chf)
+      dxdf$DALYS_chf_opt = (dxdf$chfdeaths_opt*dxdf$YLL_chf+dxdf$chfevents_opt*dxdf$YLD_chf)/(1.03^10)
       
-      dxdf$DALYS_neph_opt = (dxdf$nephdeaths_opt*dxdf$YLL_neph+dxdf$nephevents_opt*dxdf$YLD_neph)
+      dxdf$DALYS_neph_opt = (dxdf$nephdeaths_opt*dxdf$YLL_neph+dxdf$nephevents_opt*dxdf$YLD_neph)/(1.03^10)
       
-      dxdf$DALYS_retin_opt = (dxdf$retindeaths_opt*dxdf$YLL_retin+dxdf$retinevents_opt*dxdf$YLD_retin)
+      dxdf$DALYS_retin_opt = (dxdf$retindeaths_opt*dxdf$YLL_retin+dxdf$retinevents_opt*dxdf$YLD_retin)/(1.03^10)
       
-      dxdf$DALYS_neuro_opt = (dxdf$neurodeaths_opt*dxdf$YLL_neuro+dxdf$neuroevents_opt*dxdf$YLD_neuro)
+      dxdf$DALYS_neuro_opt = (dxdf$neurodeaths_opt*dxdf$YLL_neuro+dxdf$neuroevents_opt*dxdf$YLD_neuro)/(1.03^10)
       
       
       

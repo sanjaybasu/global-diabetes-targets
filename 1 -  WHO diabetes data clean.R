@@ -9,12 +9,42 @@ library(sjmisc)
 
 setwd("~/Box/Research/Research projects/WHO diabetes")
   
-df <- read_dta("HPACC_2019data_CLEAN_2020-09-23.dta")
+df <- read_dta("2021_02_04 - Appended dataset microsimulation.dta") #read_dta("HPACC_2019data_CLEAN_2020-09-23.dta")
 cost = read_csv("cost.csv")
 cnt_reg = read_csv("cnt_reg.csv")
 cvdriskchart = read_csv("cvdriskchart.csv")
 cvdriskchart = cvdriskchart %>%
   filter(dm==1)
+
+df$Country = df$country
+df$p_wt = df$wstep1_micsim
+df$sex = df$sex_micsim
+df$age = df$age_micsim
+df$hypt_med =  df$hypt_med_micsim
+df$sbp_avg = df$sbp_avg_micsim
+df$dbp_avg = df$dbp_avg_micsim
+df$dia_med = df$dia_med_micsim
+df$insulin  = df$insulin_micsim
+df$fbp = df$fbg_micsim
+df$bmi = df$bmi_micsim
+df$csmoke = df$csmoke_micsim
+df$hba1c_p = df$hba1c_p_micsim
+df$hba1c_m = 10.929*(df$hba1c_p -2.15)
+df$und_dia  = 1-df$hbg_micsim
+df$clin_dia =  df$clin_dia_micsim
+df$tchol_mgdl = df$tchol_mgdl_micsim
+df$tchol_mmoll = df$tchol_mgdl/38.67
+df$hdl_mgdl = df$hdl_mgdl_micsim
+df$hdl_mmoll = df$hdl_mgdl/38.67
+df$ldl_mgdl =  df$ldl_mgdl_micsim
+df$ldl_mmoll = df$ldl_mgdl*.02586
+df$mi = df$mi_micsim
+df$statin = df$statin_micsim
+df$und_hypt = 1-df$hypt_micsim
+df$clin_hypt =  df$clin_hypt_micsim
+df$hbg = df$hbg_micsim
+df$fbg = df$fbg_micsim
+
 df$hypt_med[df$hypt_med>1] = 0
 df$sbp_avg[df$sbp_avg>300] = NA
 df$dbp_avg[df$dbp_avg>300] = NA
@@ -24,26 +54,23 @@ df$insulin[df$insulin>1] = 0
 df$fbg[df$fbg>33] = NA
 df$csmoke[df$csmoke>1] = 0
 df$csmoke[df$csmoke<0] = 0
-df$hba1c_m[df$hba1c_m>162] = NA
-df$hba1c_m[df$hba1c_m<9.3] = NA
 df$hba1c_p[df$hba1c_p>17] = NA
 df$hba1c_p[df$hba1c_p<3] = NA
-df$bg_med[df$bg_med!=0 & df$bg_med!=1] = 0
 df$statin[df$statin!=0 & df$statin!=1] = 0
 df$mi[df$mi!=0 & df$mi!=1] = 0
 
 dfsub = df %>%
   filter(clin_dia==1) %>%  # 1 if (fbg>7.0 mmol/L AND fast=1) OR (fbg>11.1 mmol/L AND fast=0) OR hba1c_p≥6.5% OR dia_med==1 OR insulin==1. Else=0
   select(Country, p_wt, sex, age, hypt_med, sbp_avg, dbp_avg, dia_med, insulin, fbg, bmi, csmoke, 
-         hba1c_m, hba1c_p, bg_med, und_dia, clin_dia, tchol_mmoll, tchol_mgdl, hdl_mmoll, hdl_mgdl, ldl_mgdl, ldl_mmoll,
-         mi, statin, und_hypt, clin_hypt, any_med) %>%
+         hba1c_m, hba1c_p, und_dia, clin_dia, tchol_mmoll, tchol_mgdl, hdl_mmoll, hdl_mgdl, ldl_mgdl, ldl_mmoll,
+         mi, statin, und_hypt, clin_hypt) %>%
   left_join(cnt_reg,by="Country")
 
-varsToFactor <- c("sex","hypt_med", "dia_med", "insulin", "csmoke", "und_dia", "clin_dia", "mi", "statin", "und_hypt", "clin_hypt", "any_med")
+varsToFactor <- c("sex","hypt_med", "dia_med", "insulin", "csmoke", "und_dia", "clin_dia", "mi", "statin", "und_hypt", "clin_hypt")
 dfsub[varsToFactor] <- lapply(dfsub[varsToFactor], factor)
 
-vars =c("sex", "age", "hypt_med", "sbp_avg", "dbp_avg", "dia_med", "insulin", "fbg", "bmi", "csmoke", "hba1c_m", "hba1c_p", "bg_med", "und_dia", "clin_dia", "tchol_mmoll", "tchol_mgdl", "hdl_mmoll", "hdl_mgdl", "ldl_mgdl", "ldl_mmoll",
-        "mi", "statin", "und_hypt", "clin_hypt", "any_med")
+vars =c("sex", "age", "hypt_med", "sbp_avg", "dbp_avg", "dia_med", "insulin", "fbg", "bmi", "csmoke", "hba1c_m", "hba1c_p", "und_dia", "clin_dia", "tchol_mmoll", "tchol_mgdl", "hdl_mmoll", "hdl_mgdl", "ldl_mgdl", "ldl_mmoll",
+        "mi", "statin", "und_hypt", "clin_hypt")
 tableOne <- CreateTableOne(vars = vars, data = dfsub)
 print(tableOne, nonnormal = c("age", "sbp_avg", "dbp_avg", "fbg","fbp", "bmi", "hba1c_p", "hba1c_m", "tchol_mmoll", "tchol_mgdl", "hdl_mmoll", "hdl_mgdl", "ldl_mgdl", "ldl_mmoll"), quote=T)
 summary(dfsub$hba1c_m)
@@ -55,32 +82,31 @@ dfsub =  dfsub %>%
          dia_med = as.factor(dia_med),
          insulin = as.factor(insulin),
          csmoke = as.factor(csmoke),
-         bg_med = as.factor(bg_med),
          und_dia = as.factor(und_dia),
-         dx_dia = 1-und_dia,
          mi = as.factor(mi),
          statin = as.factor(statin),
          und_hypt = as.factor(und_hypt),
-         clin_hypt = as.factor(clin_hypt),
-         any_med = as.factor(any_med))
+         clin_hypt = as.factor(clin_hypt))
 tempData <- mice(dfsub,m=1,maxit=1,seed=1, method = "cart")
 dfimp <- complete(tempData,1)
-dfimp$hba1c_m = 10.929*(dfimp$hba1c_p -2.15)
+dfimp$hba1c_p = (dfimp$hba1c_m/10.929)+2.15
 dfimp$tchol_mgdl = dfimp$tchol_mmoll*38.67
 dfimp$hdl_mgdl = dfimp$hdl_mmoll*38.67
 dfimp$ldl_mmoll = dfimp$ldl_mgdl*.02586
-dfimp =dfimp %>% mutate(diagnosed_dx = 1-as.numeric(und_dia))
+dfimp =dfimp %>% mutate(diagnosed_dx = 1-as.numeric(und_dia),
+                        diagnosed_htn =  1-as.numeric(und_hypt))
 dfimp$diagnosed_dx = as.factor(dfimp$diagnosed_dx+1)
+dfimp$diagnosed_htn = as.factor(dfimp$diagnosed_htn+1)
 
 dfimp[varsToFactor] <- lapply(dfimp[varsToFactor], factor)
-vars =c("sex", "age", "hypt_med", "sbp_avg", "dbp_avg", "dia_med", "insulin", "fbg", "bmi", "csmoke", "hba1c_m", "hba1c_p", "bg_med", "diagnosed_dx", "clin_dia", "tchol_mmoll", "tchol_mgdl", "hdl_mmoll", "hdl_mgdl", "ldl_mgdl", "ldl_mmoll",
-  "mi", "statin", "und_hypt", "clin_hypt", "any_med")
+vars =c("sex", "age", "hypt_med", "sbp_avg", "dbp_avg", "dia_med", "insulin", "fbg", "bmi", "csmoke", "hba1c_m", "hba1c_p", "diagnosed_dx", "clin_dia", "tchol_mmoll", "tchol_mgdl", "hdl_mmoll", "hdl_mgdl", "ldl_mgdl", "ldl_mmoll",
+  "mi", "statin", "diagnosed_htn", "clin_hypt")
 tableTwo <- CreateTableOne(vars = vars, data = dfimp, strata="Region")
-print(tableTwo, nonnormal = c("age", "sbp_avg", "dbp_avg","fbg", "fbp", "bmi", "hba1c_p", "hba1c_m", "tchol_mmoll", "tchol_mgdl", "hdl_mmoll", "hdl_mgdl", "ldl_mgdl", "ldl_mmoll"), quote=T)
+tab1r=print(tableTwo, nonnormal = c("age", "sbp_avg", "dbp_avg","fbg", "fbp", "bmi", "hba1c_p", "hba1c_m", "tchol_mmoll", "tchol_mgdl", "hdl_mmoll", "hdl_mgdl", "ldl_mgdl", "ldl_mmoll"), quote=T)
 tableTwo <- CreateTableOne(vars = vars, data = dfimp, strata="Country")
-print(tableTwo, nonnormal = c("age", "sbp_avg", "dbp_avg","fbg", "fbp", "bmi", "hba1c_p", "hba1c_m", "tchol_mmoll", "tchol_mgdl", "hdl_mmoll", "hdl_mgdl", "ldl_mgdl", "ldl_mmoll"), quote=T)
+tab1c=print(tableTwo, nonnormal = c("age", "sbp_avg", "dbp_avg","fbg", "fbp", "bmi", "hba1c_p", "hba1c_m", "tchol_mmoll", "tchol_mgdl", "hdl_mmoll", "hdl_mgdl", "ldl_mgdl", "ldl_mmoll"), quote=T)
 tableTwo <- CreateTableOne(vars = vars, data = dfimp)
-print(tableTwo, nonnormal = c("age", "sbp_avg", "dbp_avg","fbg", "fbp", "bmi", "hba1c_p", "hba1c_m", "tchol_mmoll", "tchol_mgdl", "hdl_mmoll", "hdl_mgdl", "ldl_mgdl", "ldl_mmoll"), quote=T)
+tab1a=print(tableTwo, nonnormal = c("age", "sbp_avg", "dbp_avg","fbg", "fbp", "bmi", "hba1c_p", "hba1c_m", "tchol_mmoll", "tchol_mgdl", "hdl_mmoll", "hdl_mgdl", "ldl_mgdl", "ldl_mmoll"), quote=T)
 
 
 dfimp$sex = as.numeric(dfimp$sex)-1
@@ -91,7 +117,6 @@ dfimp$und_dia = as.numeric(dfimp$und_dia)-1
 dfimp$statin = as.numeric(dfimp$statin)-1
 dfimp$und_hypt = as.numeric(dfimp$und_hypt)-1
 dfimp$clin_hypt = as.numeric(dfimp$clin_hypt)-1
-dfimp$any_med = as.numeric(dfimp$any_med)-1
 dfimp$hypt_med = as.numeric(dfimp$hypt_med)-1
 dfimp$mi = as.numeric(dfimp$mi)-1
 
@@ -212,7 +237,7 @@ dfimp[varsToFactor] <- lapply(dfimp[varsToFactor], factor)
 
 vars =c("sbp_avg", "dbp_avg", "hba1c_p","hypt_med", "dia_med", "statin", "cvdrisk", "chfrisk", "nephrisk", "retinrisk", "neurorisk")
 tableTwo <- CreateTableOne(vars = vars, data = dfimp, strata="Country")
-tab2 = print(tableTwo, nonnormal = c("sbp_avg", "dbp_avg", "hba1c_p","cvdrisk", "chfrisk", "nephrisk", "retinrisk", "neurorisk"))
+tab2c = print(tableTwo, nonnormal = c("sbp_avg", "dbp_avg", "hba1c_p","cvdrisk", "chfrisk", "nephrisk", "retinrisk", "neurorisk"))
 
 dfimpr = dfimp %>%
   group_by(Region) 
@@ -220,6 +245,8 @@ dfimpr = dfimp %>%
 tableTwor <- CreateTableOne(vars = vars, data = dfimp, strata="Region")
 tab2r = print(tableTwor, nonnormal = c("sbp_avg", "dbp_avg", "hba1c_p","cvdrisk", "chfrisk", "nephrisk", "retinrisk", "neurorisk"))
 
+tableTwoa <- CreateTableOne(vars = vars, data = dfimp)
+tab2a = print(tableTwoa, nonnormal = c("sbp_avg", "dbp_avg", "hba1c_p","cvdrisk", "chfrisk", "nephrisk", "retinrisk", "neurorisk"))
 
 # library(survey)
 # dfimpsvy = dfimp %>%
@@ -274,14 +301,14 @@ dfimp %>%
             n_strx = sum(statin==1),
             n_htn  = sum(sbp_avg>130 | dbp_avg>80),
             n_hba1c7  = sum(hba1c_p>7  | fbg>=7),
-            n_age40 = sum(age>40),
+            n_stat = sum(age>40),
             dx_rate = sum(und_dia==0)/n(),
             treated_bp  = sum(bprx)/n_htn,
             treated_dm = sum(oralrx)/n(),
-            treated_st = sum(statin==1)/sum(age>40),
+            treated_st = sum(statin==1)/sum(age>40 | cvdrisk>20),
             control_bp = sum(sbp_avg<130 & dbp_avg<80 & bprx==1)/max(1,sum(bprx)),
             control_dm = sum((hba1c_p<=7 | fbg<7) & oralrx==1)/max(1,sum(oralrx))) %>%
-  select(n_dm, n_bprx, n_dmrx, n_strx, n_htn, n_hba1c7, n_age40,
+  select(n_dm, n_bprx, n_dmrx, n_strx, n_htn, n_hba1c7, n_stat,
          dx_rate,treated_bp, treated_dm, treated_st,  control_bp, control_dm)
 
 currrates = dfimp %>%
@@ -292,15 +319,15 @@ currrates = dfimp %>%
             n_strx = sum(statin==1),
             n_htn  = sum(sbp_avg>130 | dbp_avg>80),
             n_hba1c7  = sum(hba1c_p>7  | fbg>=7),
-            n_age40 = sum(age>40),
+            n_stat = sum(age>40),
             dx_rate = sum(und_dia==0)/n(),
             treated_bp  = sum(bprx)/n_htn,
             treated_dm = sum(oralrx)/n(),
-            treated_st = sum(statin==1)/sum(age>40),
+            treated_st = sum(statin==1)/sum(age>40 | cvdrisk>20),
             control_bp = sum(sbp_avg<130 & dbp_avg<80 & bprx==1)/max(1,sum(bprx)),
             control_dm = sum((hba1c_p<=7 | fbg<7) & oralrx==1)/max(1,sum(oralrx))) %>%
   select(Country,
-         n_dm, n_bprx, n_dmrx, n_strx, n_htn, n_hba1c7, n_age40,
+         n_dm, n_bprx, n_dmrx, n_strx, n_htn, n_hba1c7, n_stat,
          dx_rate,treated_bp, treated_dm, treated_st,  control_bp, control_dm)
 
 currrates_r = dfimp %>%
@@ -311,17 +338,25 @@ currrates_r = dfimp %>%
             n_strx = sum(statin==1),
             n_htn  = sum(sbp_avg>130 | dbp_avg>80),
             n_hba1c7  = sum(hba1c_p>7  | fbg>=7),
-            n_age40 = sum(age>40),
+            n_stat = sum(age>40),
             dx_rate = sum(und_dia==0)/n(),
             treated_bp  = sum(bprx)/n_htn,
             treated_dm = sum(oralrx)/n(),
-            treated_st = sum(statin==1)/sum(age>40),
+            treated_st = sum(statin==1)/sum(age>40 | cvdrisk>20),
             control_bp = sum(sbp_avg<130 & dbp_avg<80 & bprx==1)/max(1,sum(bprx)),
             control_dm = sum((hba1c_p<=7 | fbg<7) & oralrx==1)/max(1,sum(oralrx))) %>%
   select(Region,
-         n_dm, n_bprx, n_dmrx, n_strx, n_htn, n_hba1c7, n_age40,
+         n_dm, n_bprx, n_dmrx, n_strx, n_htn, n_hba1c7, n_stat,
          dx_rate,treated_bp, treated_dm, treated_st,  control_bp, control_dm)
 
+dfimp$cvdrisk[is.na(dfimp$cvdrisk)] = mean(na.omit(dfimp$cvdrisk))
+dfimp$chfrisk[is.na(dfimp$chfrisk)] = mean(na.omit(dfimp$chfrisk))
+
+dfimp$nephrisk[is.na(dfimp$nephrisk)] = mean(na.omit(dfimp$nephrisk))
+
+dfimp$retinrisk[is.na(dfimp$retinrisk)] = mean(na.omit(dfimp$retinrisk))
+
+dfimp$neurorisk[is.na(dfimp$neurorisk)] = mean(na.omit(dfimp$neurorisk))
 
 save(dfimp, file = "dfimp")
 

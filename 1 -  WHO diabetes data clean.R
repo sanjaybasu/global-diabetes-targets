@@ -4,8 +4,8 @@ library(tidyverse)
 library(tableone)
 library(matrixStats)
 library(mice)
-library(sjPlot)
-library(sjmisc)
+library(vcd)
+library(Hmisc)
 
 setwd("~/Box/Research/Research projects/WHO diabetes")
   
@@ -248,68 +248,44 @@ tab2r = print(tableTwor, nonnormal = c("sbp_avg", "dbp_avg", "hba1c_p","cvdrisk"
 tableTwoa <- CreateTableOne(vars = vars, data = dfimp)
 tab2a = print(tableTwoa, nonnormal = c("sbp_avg", "dbp_avg", "hba1c_p","cvdrisk", "chfrisk", "nephrisk", "retinrisk", "neurorisk"))
 
-# library(survey)
-# dfimpsvy = dfimp %>%
-#   group_by(Country) %>%
-#   mutate(positionInCategory = 1:n())
-#   
-#   
-# dfimpsvy =  svydesign(id  = ~positionInCategory,  weights = ~p_wt, data = dfimpsvy)
-# tableTwow <- svyCreateTableOne(vars = vars, data = dfimpsvy, strata="Country")
-# tab2w = print(tableTwow, nonnormal = c("sbp_avg", "dbp_avg", "hba1c_p","cvdrisk", "chfrisk", "nephrisk", "retinrisk", "neurorisk"))
-# 
-# dfimpsvy_diag = dfimp %>%
-#   filter(und_dia==0) %>%
-#   group_by(Country) %>%
-#   mutate(positionInCategory = 1:n()) 
-# 
-# 
-# dfimpsvy_diag =  svydesign(id  = ~positionInCategory,  weights = ~p_wt, data = dfimpsvy_diag)
-# tableTwod <- svyCreateTableOne(vars = vars, data = dfimpsvy_diag, strata="Country")
-# tab2d = print(tableTwod, nonnormal = c("sbp_avg", "dbp_avg", "hba1c_p","cvdrisk", "chfrisk", "nephrisk", "retinrisk", "neurorisk"))
-# 
-# 
-# dfimpsvy_diagr = dfimp %>%
-#   filter(und_dia==0) %>%
-#   group_by(Region) %>%
-#   mutate(positionInCategory = 1:n()) 
-# 
-# 
-# dfimpsvy_diagr =  svydesign(id  = ~positionInCategory,  weights = ~p_wt, data = dfimpsvy_diagr) 
-# tableTwodr <- svyCreateTableOne(vars = vars, data = dfimpsvy_diagr, strata="Region")
-# tab2dr = print(tableTwodr, nonnormal = c("sbp_avg", "dbp_avg", "hba1c_p","cvdrisk", "chfrisk", "nephrisk", "retinrisk", "neurorisk"))
+prop.table(table(dfimp$diagnosed_htn, (dfimp$sbp_avg>=140 & dfimp$dbp_avg>=90)),2)
+prop.table(table(dfimp$hypt_med, dfimp$diagnosed_htn),2)
+prop.table(table(dfimp$hypt_med, (dfimp$sbp_avg>=140 | dfimp$dbp_avg>=90)),2)
+prop.table(table(dfimp$hypt_med, ((dfimp$diagnosed_htn==1 |  dfimp$sbp_avg>=140 | dfimp$dbp_avg>=90))),2)
+prop.table(table(dfimp$hypt_med, (dfimp$sbp_avg<130 & dfimp$dbp_avg<80)),1)
+prop.table(table(dfimp$dia_med, dfimp$diagnosed_dx),2)
+prop.table(table(dfimp$dia_med, (dfimp$fbg>=7 | dfimp$hba1c_p>7)),2)
+prop.table(table(dfimp$dia_med, (dfimp$fbg<7 | dfimp$hba1c_p<=7)),1)
+prop.table(table(dfimp$statin, (dfimp$age>=40 | dfimp$cvdrisk>20)),2)
+
+
+dfm1  =  as.data.frame(dfimp) %>%
+  mutate(Diagnosed = diagnosed_dx,
+         Treated = dia_med,
+         Controlled = hba1c_p<=7 & fbg<7)
+dfm2 = as.data.frame(dfimp) %>%
+  mutate(Diagnosed = diagnosed_htn,
+         Treated  = hypt_med,
+         Controlled= sbp_avg<130 & dbp_avg<80)
+dfm1$Diagnosed[dfm1$Treated==1 & dfm1$Diagnosed==0] = 1
+dfm2$Diagnosed[dfm2$Treated==1 & dfm2$Diagnosed==0] = 1
+dfm1$Diagnosed = dfm1$Diagnosed==1
+dfm2$Diagnosed = dfm2$Diagnosed==1
+
+dmfunnel = xtabs( ~ Treated + Controlled + Diagnosed, data = dfm1)
+cotabplot(dmfunnel,
+          set_labels=list(Diagnosed = c("Undiagnosed DM", "Diagnosed DM"),
+                          Treated = c("Untreated", "Treated"),
+                          Controlled = c("Uncontrolled", "Controlled")))
+
+htnfunnel = xtabs( ~ Treated + Controlled + Diagnosed, data = dfm2)
+cotabplot(htnfunnel,
+          set_labels=list(Diagnosed = c("Undiagnosed HTN", "Diagnosed HTN"),
+                          Treated = c("Untreated", "Treated"),
+                          Controlled = c("Uncontrolled", "Controlled")))
 
 
 
-
-# current rate of being diagnosed with  DM
-frq(dfimp$und_dia) # 33.5% are  diagnosed
-
-# current treatment rates, all cases (not just diagnosed)
-sjt.xtab(dfimp$sbp_avg>130,dfimp$bprx,show.cell.prc = T) # 9.2% for those with HTN  are treated
-frq(dfimp$oralrx) # 29.1% on DM Rx
-sjt.xtab(dfimp$age>40, dfimp$statin==1,show.cell.prc = T) # 0.3% above 40 yrs old on statin
-
-# current control rates
-sjt.xtab(dfimp$bprx, dfimp$sbp_avg<=130,show.cell.prc = T) # 8.4% HTN control
-sjt.xtab(dfimp$hba1c_p<=7, dfimp$oralrx,show.cell.prc = T) # 14.3% A1c control
-
-dfimp %>%
-  summarise(n_dm = n(),
-            n_bprx = sum(bprx==1),
-            n_dmrx = sum(oralrx==1),
-            n_strx = sum(statin==1),
-            n_htn  = sum(sbp_avg>130 | dbp_avg>80),
-            n_hba1c7  = sum(hba1c_p>7  | fbg>=7),
-            n_stat = sum(age>40),
-            dx_rate = sum(und_dia==0)/n(),
-            treated_bp  = sum(bprx)/n_htn,
-            treated_dm = sum(oralrx)/n(),
-            treated_st = sum(statin==1)/sum(age>40 | cvdrisk>20),
-            control_bp = sum(sbp_avg<130 & dbp_avg<80 & bprx==1)/max(1,sum(bprx)),
-            control_dm = sum((hba1c_p<=7 | fbg<7) & oralrx==1)/max(1,sum(oralrx))) %>%
-  select(n_dm, n_bprx, n_dmrx, n_strx, n_htn, n_hba1c7, n_stat,
-         dx_rate,treated_bp, treated_dm, treated_st,  control_bp, control_dm)
 
 currrates = dfimp %>%
   group_by(Country) %>%
@@ -317,18 +293,23 @@ currrates = dfimp %>%
             n_bprx = sum(bprx==1),
             n_dmrx = sum(oralrx==1),
             n_strx = sum(statin==1),
-            n_htn  = sum(sbp_avg>130 | dbp_avg>80),
+            n_htn  = sum(diagnosed_htn==1 | sbp_avg>=140 | dbp_avg>=90 | bprx==1),
             n_hba1c7  = sum(hba1c_p>7  | fbg>=7),
-            n_stat = sum(age>40),
-            dx_rate = sum(und_dia==0)/n(),
-            treated_bp  = sum(bprx)/n_htn,
-            treated_dm = sum(oralrx)/n(),
-            treated_st = sum(statin==1)/sum(age>40 | cvdrisk>20),
-            control_bp = sum(sbp_avg<130 & dbp_avg<80 & bprx==1)/max(1,sum(bprx)),
-            control_dm = sum((hba1c_p<=7 | fbg<7) & oralrx==1)/max(1,sum(oralrx))) %>%
+            n_stat = sum(age>40 | cvdrisk>20),
+            dx_dm = sum(und_dia==0),
+            dx_htn = sum(diagnosed_htn==1),
+            treated_bp_n  = sum((bprx==1) & (diagnosed_htn==1 )),
+            treated_dm_n = sum((oralrx==1) & (und_dia==0)),
+            treated_st_n = sum((statin==1) & (age>40 | cvdrisk>20)),
+            control_bp_n = sum(sbp_avg<130 & dbp_avg<80 & ((bprx==1) & diagnosed_htn==1)),
+            control_dm_n = sum((hba1c_p<=7 | fbg<7) & oralrx==1 & (und_dia==0))) %>%
   select(Country,
          n_dm, n_bprx, n_dmrx, n_strx, n_htn, n_hba1c7, n_stat,
-         dx_rate,treated_bp, treated_dm, treated_st,  control_bp, control_dm)
+         dx_dm,dx_htn,treated_bp_n, treated_dm_n, treated_st_n,  control_bp_n, control_dm_n)
+
+
+
+
 
 currrates_r = dfimp %>%
   group_by(Region) %>%
@@ -336,26 +317,44 @@ currrates_r = dfimp %>%
             n_bprx = sum(bprx==1),
             n_dmrx = sum(oralrx==1),
             n_strx = sum(statin==1),
-            n_htn  = sum(sbp_avg>130 | dbp_avg>80),
+            n_htn  = sum(diagnosed_htn==1 | sbp_avg>=140 | dbp_avg>=90  | bprx==1),
             n_hba1c7  = sum(hba1c_p>7  | fbg>=7),
-            n_stat = sum(age>40),
-            dx_rate = sum(und_dia==0)/n(),
-            treated_bp  = sum(bprx)/n_htn,
-            treated_dm = sum(oralrx)/n(),
-            treated_st = sum(statin==1)/sum(age>40 | cvdrisk>20),
-            control_bp = sum(sbp_avg<130 & dbp_avg<80 & bprx==1)/max(1,sum(bprx)),
-            control_dm = sum((hba1c_p<=7 | fbg<7) & oralrx==1)/max(1,sum(oralrx))) %>%
+            n_stat = sum(age>40 | cvdrisk>20),
+            dx_dm = sum(und_dia==0),
+            dx_htn = sum(diagnosed_htn==1),
+            treated_bp_n  = sum((bprx==1) & (diagnosed_htn==1 )),
+            treated_dm_n = sum((oralrx==1) & (und_dia==0)),
+            treated_st_n = sum((statin==1) & (age>40 | cvdrisk>20)),
+            control_bp_n = sum(sbp_avg<130 & dbp_avg<80 & ((bprx==1) & diagnosed_htn==1)),
+            control_dm_n = sum((hba1c_p<=7 | fbg<7) & oralrx==1 & (und_dia==0))) %>%
   select(Region,
          n_dm, n_bprx, n_dmrx, n_strx, n_htn, n_hba1c7, n_stat,
-         dx_rate,treated_bp, treated_dm, treated_st,  control_bp, control_dm)
+         dx_dm,dx_htn,treated_bp_n, treated_dm_n, treated_st_n,  control_bp_n, control_dm_n)
+
+
+currrates_a = dfimp %>%
+  summarise(n_dm = n(),
+            n_bprx = sum(bprx==1),
+            n_dmrx = sum(oralrx==1),
+            n_strx = sum(statin==1),
+            n_htn  = sum(diagnosed_htn==1 | sbp_avg>=140 | dbp_avg>=90  | bprx==1),
+            n_hba1c7  = sum(hba1c_p>7  | fbg>=7),
+            n_stat = sum(age>40 | cvdrisk>20),
+            dx_dm = sum(und_dia==0),
+            dx_htn = sum(diagnosed_htn==1),
+            treated_bp_n  = sum((bprx==1) & (diagnosed_htn==1 )),
+            treated_dm_n = sum((oralrx==1) & (und_dia==0)),
+            treated_st_n = sum((statin==1) & (age>40 | cvdrisk>20)),
+            control_bp_n = sum(sbp_avg<130 & dbp_avg<80 & ((bprx==1) & diagnosed_htn==1)),
+            control_dm_n = sum((hba1c_p<=7 | fbg<7) & oralrx==1 & (und_dia==0))) %>%
+  select(n_dm, n_bprx, n_dmrx, n_strx, n_htn, n_hba1c7, n_stat,
+         dx_dm,dx_htn,treated_bp_n, treated_dm_n, treated_st_n,  control_bp_n, control_dm_n)
+
 
 dfimp$cvdrisk[is.na(dfimp$cvdrisk)] = mean(na.omit(dfimp$cvdrisk))
 dfimp$chfrisk[is.na(dfimp$chfrisk)] = mean(na.omit(dfimp$chfrisk))
-
 dfimp$nephrisk[is.na(dfimp$nephrisk)] = mean(na.omit(dfimp$nephrisk))
-
 dfimp$retinrisk[is.na(dfimp$retinrisk)] = mean(na.omit(dfimp$retinrisk))
-
 dfimp$neurorisk[is.na(dfimp$neurorisk)] = mean(na.omit(dfimp$neurorisk))
 
 save(dfimp, file = "dfimp")

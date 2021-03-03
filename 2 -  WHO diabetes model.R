@@ -6,6 +6,8 @@ load("dfimp")
 cost = read_csv("cost.csv")
 cnt_reg = read_csv("cnt_reg.csv")
 
+dfimp = left_join(dfimp,cost)
+
 dfrep = do.call("rbind", replicate(25, dfimp, simplify = FALSE))
 
 
@@ -29,7 +31,6 @@ newscreening[newscreening<0]= 0
 
 dxdf$newlydetected = 1*(dxdf$detected==1)+newscreening*(dxdf$detected==0)
 
-dxdf = left_join(dxdf,cost)
 
 ncon  = length(table(dxdf$Country))
 

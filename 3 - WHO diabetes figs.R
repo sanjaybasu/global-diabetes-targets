@@ -9,7 +9,7 @@ cnt_reg = read_csv("~/Box/Research/Research projects/WHO diabetes/cnt_reg.csv")
 
 ###### NO NEW  SCREENING ######
 
-
+  
 load("outmat_cvdevents1")
 load("outmat_chfevents1")
 load("outmat_nephevents1")

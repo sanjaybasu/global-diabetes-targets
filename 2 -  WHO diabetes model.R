@@ -1,8 +1,8 @@
-setwd("~/Box/Research/Research projects/WHO diabetes")
+#setwd("~/Box/Research/Research projects/WHO diabetes")
 rm(list=ls())
 library(tidyverse)
 
-load("dfimp")
+load("dfimp.RData")
 cost = read_csv("cost.csv")
 cnt_reg = read_csv("cnt_reg.csv")
 
@@ -46,6 +46,7 @@ outmat_nephdeaths = NULL
 outmat_retindeaths = NULL
 outmat_neurodeaths = NULL
 
+outmat_scrcosts = NULL
 outmat_rxbpcosts = NULL
 outmat_rxdmcosts = NULL
 outmat_rxstatincosts = NULL
@@ -79,7 +80,7 @@ iters = 10000
 for (iter in 1:iters) {
   print(paste("On iteration", iter))
   
-  
+  dxdf$scrcosts_base = 0
   
   dxdf$rxbpcosts_base = dxdf$bprx*dxdf$rxbp_cost*dxdf$detected/(1.03^10)
   dxdf$rxdmcosts_base = dxdf$oralrx*dxdf$rxdm_cost*dxdf$detected/(1.03^10)
@@ -163,6 +164,7 @@ for (iter in 1:iters) {
               nephdeaths_base = sum(nephdeaths_base)/n,
               retindeaths_base = sum(retindeaths_base)/n,
               neurodeaths_base = sum(neurodeaths_base)/n,
+              scrcosts_base = sum(scrcosts_base)/n,
               rxbpcosts_base = sum(rxbpcosts_base)/n,
               rxdmcosts_base = sum(rxdmcosts_base)/n,
               rxstatincosts_base = sum(rxstatincosts_base)/n,
@@ -202,6 +204,8 @@ for (iter in 1:iters) {
   neurodeaths_mat = parsed %>% select(Country, neurodeaths_base)
   neurodeaths_mat = as.matrix(neurodeaths_mat)
   
+  scrcosts_mat = parsed %>% select(Country, scrcosts_base)
+  scrcosts_mat = as.matrix(scrcosts_mat)
   rxbpcosts_mat = parsed %>% select(Country, rxbpcosts_base)
   rxbpcosts_mat = as.matrix(rxbpcosts_mat)
   rxdmcosts_mat = parsed %>% select(Country, rxdmcosts_base)
@@ -257,6 +261,8 @@ for (iter in 1:iters) {
       controlled = rbinom(length(dxdf$rxbp0),1,pctrl)
       set.seed(iter)
       controlledbg = rbinom(length(dxdf$rxdm0),1,pctrl)
+      
+      dxdf$scr_costs = dxdf$scr_cost * dxdf$newlydetected
       
       set.seed(iter)
       dxdf$rxbp = dxdf$rxbp0*rbinom(length(dxdf$rxbp0),1,ptreat)
@@ -389,6 +395,7 @@ for (iter in 1:iters) {
                   nephdeaths_opt = sum(nephdeaths_opt)/n,
                   retindeaths_opt = sum(retindeaths_opt)/n,
                   neurodeaths_opt = sum(neurodeaths_opt)/n,
+                  scr_costs = sum(scr_costs)/n,
                   rxbp_costs = sum(rxbp_costs)/n,
                   rxdm_costs = sum(rxdm_costs)/n,
                   rxstatin_costs = sum(rxstatin_costs)/n,
@@ -411,6 +418,7 @@ for (iter in 1:iters) {
       retinevents_mat = cbind(retinevents_mat,as.double(parsed$retinevents_opt))
       neuroevents_mat = cbind(neuroevents_mat,as.double(parsed$neuroevents_opt))
       
+      scrcosts_mat = cbind(scrcosts_mat,as.double(parsed$scr_costs))
       rxbpcosts_mat = cbind(rxbpcosts_mat,as.double(parsed$rxbp_costs))
       rxdmcosts_mat = cbind(rxdmcosts_mat,as.double(parsed$rxdm_costs))
       rxstatincosts_mat = cbind(rxstatincosts_mat,as.double(parsed$rxstatin_costs))
@@ -446,6 +454,7 @@ for (iter in 1:iters) {
              "80% trt, 60% ctrl",
              "80% trt, 80% ctrl")
   
+  colnames(scrcosts_mat) = labels
   colnames(rxbpcosts_mat) = labels
   colnames(rxdmcosts_mat) = labels
   colnames(rxstatincosts_mat) = labels
@@ -482,6 +491,7 @@ for (iter in 1:iters) {
   outmat_retindeaths = bind_rows(outmat_retindeaths,as_tibble(retindeaths_mat))
   outmat_neurodeaths = bind_rows(outmat_neurodeaths,as_tibble(neurodeaths_mat))
   
+  outmat_scrcosts = bind_rows(outmat_scrcosts,as_tibble(scrcosts_mat))
   outmat_rxbpcosts = bind_rows(outmat_rxbpcosts,as_tibble(rxbpcosts_mat))
   outmat_rxdmcosts = bind_rows(outmat_rxdmcosts,as_tibble(rxdmcosts_mat))
   outmat_rxstatincosts = bind_rows(outmat_rxstatincosts,as_tibble(rxstatincosts_mat))
@@ -500,8 +510,9 @@ for (iter in 1:iters) {
   
 }
 
-setwd("~/Box/Research/Research projects/WHO diabetes/Results matrices/")
+#setwd("~/Box/Research/Research projects/WHO diabetes/Results matrices/")
 
+save(outmat_scrcosts,file=paste0("outmat_scrcosts",screens))
 save(outmat_rxbpcosts,file=paste0("outmat_rxbpcosts",screens))
 save(outmat_rxdmcosts,file=paste0("outmat_rxdmcosts",screens))
 save(outmat_rxstatincosts,file=paste0("outmat_rxstatincosts",screens))

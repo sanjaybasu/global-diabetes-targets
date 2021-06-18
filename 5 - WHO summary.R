@@ -1,5 +1,5 @@
 
-setwd("~/Downloads/Results matrices")
+setwd("~/Downloads/rstudio-export")
 
 library(tidyverse)
 library(ggplot2)
@@ -7,33 +7,34 @@ library(robustbase)
 cnt_reg = read_csv("~/Downloads/cnt_reg.csv")
 
 
-load("outmat_cvdevents3")
-load("outmat_chfevents3")
-load("outmat_nephevents3")
-load("outmat_retinevents3")
-load("outmat_neuroevents3")
+load("outmat_cvdevents1")
+load("outmat_chfevents1")
+load("outmat_nephevents1")
+load("outmat_retinevents1")
+load("outmat_neuroevents1")
 
-load("outmat_cvddeaths3")
-load("outmat_chfdeaths3")
-load("outmat_nephdeaths3")
-load("outmat_retindeaths3")
-load("outmat_neurodeaths3")
+load("outmat_cvddeaths1")
+load("outmat_chfdeaths1")
+load("outmat_nephdeaths1")
+load("outmat_retindeaths1")
+load("outmat_neurodeaths1")
 
-load("outmat_cvddalys3")
-load("outmat_chfdalys3")
-load("outmat_nephdalys3")
-load("outmat_retindalys3")
-load("outmat_neurodalys3")
+load("outmat_cvddalys1")
+load("outmat_chfdalys1")
+load("outmat_nephdalys1")
+load("outmat_retindalys1")
+load("outmat_neurodalys1")
 
-load("outmat_rxbpcosts3")
-load("outmat_rxdmcosts3")
-load("outmat_rxstatincosts3")
+load("outmat_scrcosts1")
+load("outmat_rxbpcosts1")
+load("outmat_rxdmcosts1")
+load("outmat_rxstatincosts1")
 
-load("outmat_cvdcosts3")
-load("outmat_chfcosts3")
-load("outmat_nephcosts3")
-load("outmat_retincosts3")
-load("outmat_neurocosts3")
+load("outmat_cvdcosts1")
+load("outmat_chfcosts1")
+load("outmat_nephcosts1")
+load("outmat_retincosts1")
+load("outmat_neurocosts1")
 
 
 
@@ -165,6 +166,8 @@ totdalys75 %>% select(2:7) %>% group_by(outcome) %>% summarize_all(median)
 
 ##### COSTS #####
 
+scrcosts = outmat_scrcosts %>% mutate_at(2:6,as.numeric) %>% group_by(Country) %>% summarise_all(median, na.rm = T) %>% mutate(outcome = "scr")
+scrcosts[is.na(scrcosts)] = mean(colMeans(scrcosts[,3:6],na.rm=T))
 rxbpcosts = outmat_rxbpcosts %>% mutate_at(2:6,as.numeric) %>% group_by(Country) %>% summarise_all(median, na.rm = T) %>% mutate(outcome = "rxbp")
 rxdmcosts = outmat_rxdmcosts %>% mutate_at(2:6,as.numeric) %>% group_by(Country) %>% summarise_all(median, na.rm = T) %>% mutate(outcome = "rxdm")
 rxstatincosts = outmat_rxstatincosts %>% mutate_at(2:6,as.numeric) %>% group_by(Country) %>% summarise_all(median, na.rm = T) %>% mutate(outcome = "rxstatin")
@@ -175,7 +178,7 @@ nephcosts = outmat_nephcosts %>% mutate_at(2:6,as.numeric) %>% group_by(Country)
 neurocosts = outmat_neurocosts %>% mutate_at(2:6,as.numeric) %>% group_by(Country) %>% summarise_all(median, na.rm = T) %>% mutate(outcome = "neuro")
 retincosts = outmat_retincosts %>% mutate_at(2:6,as.numeric) %>% group_by(Country) %>% summarise_all(median, na.rm = T)  %>% mutate(outcome = "retin")
 
-totcosts = rbind(rxbpcosts,rxdmcosts,rxstatincosts,cvdcosts,chfcosts,nephcosts,neurocosts,retincosts)
+totcosts = rbind(scrcosts,rxbpcosts,rxdmcosts,rxstatincosts,cvdcosts,chfcosts,nephcosts,neurocosts,retincosts)
 tot = totcosts  %>%
   group_by(Country) %>%
   select(2:6)%>%
@@ -196,7 +199,7 @@ tottab = totcosts %>%
   summarize_all(sum)
 
 # 25th centile
-
+scrcosts25 = outmat_scrcosts %>% mutate_at(2:6,as.numeric) %>% group_by(Country) %>% summarise_at(vars(colnames(outmat_cvddalys[,2:6])), list(Q1=~quantile(., probs = 0.25))) %>% mutate(outcome = "scr")
 rxbpcosts25 = outmat_rxbpcosts %>% mutate_at(2:6,as.numeric) %>% group_by(Country) %>% summarise_at(vars(colnames(outmat_cvddalys[,2:6])), list(Q1=~quantile(., probs = 0.25))) %>% mutate(outcome = "rxbp")
 rxdmcosts25 = outmat_rxdmcosts %>% mutate_at(2:6,as.numeric) %>% group_by(Country) %>% summarise_at(vars(colnames(outmat_cvddalys[,2:6])), list(Q1=~quantile(., probs = 0.25))) %>% mutate(outcome = "rxdm")
 rxstatincosts25 = outmat_rxstatincosts %>% mutate_at(2:6,as.numeric) %>% group_by(Country) %>% summarise_at(vars(colnames(outmat_cvddalys[,2:6])), list(Q1=~quantile(., probs = 0.25))) %>% mutate(outcome = "rxstatin")
@@ -229,6 +232,7 @@ tottab25 = totcosts25 %>%
 
 
 # 75th centile
+scrcosts75 = outmat_scrcosts %>% mutate_at(2:6,as.numeric) %>% group_by(Country) %>% summarise_at(vars(colnames(outmat_cvddalys[,2:6])), list(Q1=~quantile(., probs = 0.75))) %>% mutate(outcome = "scr")
 
 rxbpcosts75 = outmat_rxbpcosts %>% mutate_at(2:6,as.numeric) %>% group_by(Country) %>% summarise_at(vars(colnames(outmat_cvddalys[,2:6])), list(Q3=~quantile(., probs = 0.75))) %>% mutate(outcome = "rxbp")
 rxdmcosts75 = outmat_rxdmcosts %>% mutate_at(2:6,as.numeric) %>% group_by(Country) %>% summarise_at(vars(colnames(outmat_cvddalys[,2:6])), list(Q3=~quantile(., probs = 0.75))) %>% mutate(outcome = "rxdm")
@@ -261,6 +265,7 @@ tottab75 = totcosts75 %>%
   summarize_all(sum)
 
 # by region and by outcome
+scrcosts = outmat_scrcosts %>% left_join(cnt_reg)%>% mutate_at(2:6,as.numeric) %>% group_by(Region) %>% summarise_all(median, na.rm = T) %>% mutate(outcome = "scr")
 
 rxbpcosts = outmat_rxbpcosts %>% left_join(cnt_reg)%>% mutate_at(2:6,as.numeric) %>% group_by(Region) %>% summarise_all(median, na.rm = T) %>% mutate(outcome = "rxbp")
 rxdmcosts = outmat_rxdmcosts %>% left_join(cnt_reg)%>% mutate_at(2:6,as.numeric) %>% group_by(Region) %>% summarise_all(median, na.rm = T) %>% mutate(outcome = "rxdm")
@@ -272,11 +277,12 @@ nephcosts = outmat_nephcosts %>% left_join(cnt_reg)%>% mutate_at(2:6,as.numeric)
 neurocosts = outmat_neurocosts %>% left_join(cnt_reg)%>% mutate_at(2:6,as.numeric) %>% group_by(Region) %>% summarise_all(median, na.rm = T) %>% mutate(outcome = "neuro")
 retincosts = outmat_retincosts %>% left_join(cnt_reg)%>% mutate_at(2:6,as.numeric) %>% group_by(Region) %>% summarise_all(median, na.rm = T)  %>% mutate(outcome = "retin")
 
-totcosts = rbind(rxbpcosts,rxdmcosts,rxstatincosts,cvdcosts,chfcosts,nephcosts,neurocosts,retincosts)
+totcosts = rbind(scrcosts,rxbpcosts,rxdmcosts,rxstatincosts,cvdcosts,chfcosts,nephcosts,neurocosts,retincosts)
 totcosts %>% select(3:8) %>% group_by(outcome) %>% summarize_all(median)
 
 
 # 25th centile
+scrcosts25 = outmat_scrcosts %>% left_join(cnt_reg)%>% mutate_at(2:6,as.numeric) %>% group_by(Region) %>% summarise_at(vars(colnames(outmat_cvddalys[,2:6])), list(Q1=~quantile(., probs = 0.25))) %>% mutate(outcome = "scr")
 
 rxbpcosts25 = outmat_rxbpcosts %>% left_join(cnt_reg)%>% mutate_at(2:6,as.numeric) %>% group_by(Region) %>% summarise_at(vars(colnames(outmat_cvddalys[,2:6])), list(Q1=~quantile(., probs = 0.25))) %>% mutate(outcome = "rxbp")
 rxdmcosts25 = outmat_rxdmcosts %>% left_join(cnt_reg)%>% mutate_at(2:6,as.numeric) %>% group_by(Region) %>% summarise_at(vars(colnames(outmat_cvddalys[,2:6])), list(Q1=~quantile(., probs = 0.25))) %>% mutate(outcome = "rxdm")
@@ -288,12 +294,13 @@ nephcosts25 = outmat_nephcosts %>% left_join(cnt_reg)%>% mutate_at(2:6,as.numeri
 neurocosts25 = outmat_neurocosts %>% left_join(cnt_reg)%>% mutate_at(2:6,as.numeric) %>% group_by(Region) %>% summarise_at(vars(colnames(outmat_cvddalys[,2:6])), list(Q1=~quantile(., probs = 0.25))) %>% mutate(outcome = "neuro")
 retincosts25 = outmat_retincosts %>% left_join(cnt_reg)%>% mutate_at(2:6,as.numeric) %>% group_by(Region) %>% summarise_at(vars(colnames(outmat_cvddalys[,2:6])), list(Q1=~quantile(., probs = 0.25)))  %>% mutate(outcome = "retin")
 
-totcosts25 = rbind(rxbpcosts25,rxdmcosts25,rxstatincosts25,cvdcosts25,chfcosts25,nephcosts25,neurocosts25,retincosts25)
+totcosts25 = rbind(scrcosts25,rxbpcosts25,rxdmcosts25,rxstatincosts25,cvdcosts25,chfcosts25,nephcosts25,neurocosts25,retincosts25)
 totcosts25 %>% select(2:7) %>% group_by(outcome) %>% summarize_all(median)
 
 
 
 # 75th centile
+scrcosts75 = outmat_scrcosts %>% left_join(cnt_reg)%>% mutate_at(2:6,as.numeric) %>% group_by(Region) %>% summarise_at(vars(colnames(outmat_cvddalys[,2:6])), list(Q3=~quantile(., probs = 0.75))) %>% mutate(outcome = "scr")
 
 rxbpcosts75 = outmat_rxbpcosts %>% left_join(cnt_reg)%>% mutate_at(2:6,as.numeric) %>% group_by(Region) %>% summarise_at(vars(colnames(outmat_cvddalys[,2:6])), list(Q3=~quantile(., probs = 0.75))) %>% mutate(outcome = "rxbp")
 rxdmcosts75 = outmat_rxdmcosts %>% left_join(cnt_reg)%>% mutate_at(2:6,as.numeric) %>% group_by(Region) %>% summarise_at(vars(colnames(outmat_cvddalys[,2:6])), list(Q3=~quantile(., probs = 0.75))) %>% mutate(outcome = "rxdm")
@@ -305,13 +312,14 @@ nephcosts75 = outmat_nephcosts %>% left_join(cnt_reg)%>% mutate_at(2:6,as.numeri
 neurocosts75 = outmat_neurocosts %>% left_join(cnt_reg)%>% mutate_at(2:6,as.numeric) %>% group_by(Region) %>% summarise_at(vars(colnames(outmat_cvddalys[,2:6])), list(Q3=~quantile(., probs = 0.75))) %>% mutate(outcome = "neuro")
 retincosts75 = outmat_retincosts %>% left_join(cnt_reg)%>% mutate_at(2:6,as.numeric) %>% group_by(Region) %>% summarise_at(vars(colnames(outmat_cvddalys[,2:6])), list(Q3=~quantile(., probs = 0.75)))  %>% mutate(outcome = "retin")
 
-totcosts75 = rbind(rxbpcosts75,rxdmcosts75,rxstatincosts75,cvdcosts75,chfcosts75,nephcosts75,neurocosts75,retincosts75)
+totcosts75 = rbind(scrcosts75,rxbpcosts75,rxdmcosts75,rxstatincosts75,cvdcosts75,chfcosts75,nephcosts75,neurocosts75,retincosts75)
 totcosts75 %>% select(2:7) %>% group_by(outcome) %>% summarize_all(median)
 
 
 
 
 #### ICER ####
+scrcosts = outmat_scrcosts %>% mutate_at(2:6,as.numeric) %>% group_by(Country) %>% summarise_all(median, na.rm = T) %>% mutate(outcome = "scr")
 
 rxbpcosts = outmat_rxbpcosts %>% mutate_at(2:6,as.numeric) %>% group_by(Country) %>% summarise_all(median, na.rm = T) %>% mutate(outcome = "rxbp")
 rxdmcosts = outmat_rxdmcosts %>% mutate_at(2:6,as.numeric) %>% group_by(Country) %>% summarise_all(median, na.rm = T) %>% mutate(outcome = "rxdm")
@@ -323,7 +331,7 @@ nephcosts = outmat_nephcosts %>% mutate_at(2:6,as.numeric) %>% group_by(Country)
 neurocosts = outmat_neurocosts %>% mutate_at(2:6,as.numeric) %>% group_by(Country) %>% summarise_all(median, na.rm = T) %>% mutate(outcome = "neuro")
 retincosts = outmat_retincosts %>% mutate_at(2:6,as.numeric) %>% group_by(Country) %>% summarise_all(median, na.rm = T)  %>% mutate(outcome = "retin")
 
-totcosts = rbind(rxbpcosts,rxdmcosts,rxstatincosts,cvdcosts,chfcosts,nephcosts,neurocosts,retincosts)
+totcosts = rbind(scrcosts,rxbpcosts,rxdmcosts,rxstatincosts,cvdcosts,chfcosts,nephcosts,neurocosts,retincosts)
 tot = totcosts  %>%
   group_by(Country) %>%
   select(2:6)%>%
@@ -395,6 +403,7 @@ inc_cost/inc_daly
 
 
 
+scrcosts25 = outmat_scrcosts %>% mutate_at(2:6,as.numeric) %>% group_by(Country) %>% summarise_at(vars(colnames(outmat_cvddalys[,2:6])), list(Q1=~quantile(., probs = 0.25))) %>% mutate(outcome = "scr")
 
 rxbpcosts25 = outmat_rxbpcosts %>% mutate_at(2:6,as.numeric) %>% group_by(Country) %>% summarise_at(vars(colnames(outmat_cvddalys[,2:6])), list(Q1=~quantile(., probs = 0.25))) %>% mutate(outcome = "rxbp")
 rxdmcosts25 = outmat_rxdmcosts %>% mutate_at(2:6,as.numeric) %>% group_by(Country) %>% summarise_at(vars(colnames(outmat_cvddalys[,2:6])), list(Q1=~quantile(., probs = 0.25))) %>% mutate(outcome = "rxdm")
@@ -476,6 +485,7 @@ inc_daly25 = -cbind((tottab25[,3]-tottab25[,2]),(tottab25[,4]-tottab25[,2]),(tot
 
 
 
+scrcosts75 = outmat_scrcosts %>% mutate_at(2:6,as.numeric) %>% group_by(Country) %>% summarise_at(vars(colnames(outmat_cvddalys[,2:6])), list(Q3=~quantile(., probs = 0.75))) %>% mutate(outcome = "scr")
 
 rxbpcosts75 = outmat_rxbpcosts %>% mutate_at(2:6,as.numeric) %>% group_by(Country) %>% summarise_at(vars(colnames(outmat_cvddalys[,2:6])), list(Q3=~quantile(., probs = 0.75))) %>% mutate(outcome = "rxbp")
 rxdmcosts75 = outmat_rxdmcosts %>% mutate_at(2:6,as.numeric) %>% group_by(Country) %>% summarise_at(vars(colnames(outmat_cvddalys[,2:6])), list(Q3=~quantile(., probs = 0.75))) %>% mutate(outcome = "rxdm")

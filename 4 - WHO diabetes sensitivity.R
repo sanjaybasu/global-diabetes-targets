@@ -1,8 +1,8 @@
-setwd("~/Box/Research/Research projects/WHO diabetes")
+setwd("~/Downloads")
 rm(list=ls())
 library(tidyverse)
 
-load("dfimp")
+load("dfimp.RData")
 cost = read_csv("cost.csv")
 cnt_reg = read_csv("cnt_reg.csv")
 
@@ -68,9 +68,6 @@ D_neph = mean(c(0.573, 0.105)) # dialysis or stage 4 ckd
 D_retin = mean(c(0.195)) # blindness
 D_neuro = mean(c(0.099)) 
 b = 0.04
-
-iter = 1
-
 
 
 dxdf$rxbpcosts_base = dxdf$bprx*dxdf$rxbp_cost*dxdf$detected/(1.03^10)
@@ -225,24 +222,30 @@ neurodalys_mat = parsed %>% select(Country, neurodalys_base)
 neurodalys_mat = as.matrix(neurodalys_mat)
 
 
-dxdf$rxbp =  dxdf$bprx*(dxdf$bprx==1) + rbinom(dxdf$bprx==0,1,0.35)*(dxdf$bprx==0)
-dxdf$rxdm =  dxdf$oralrx*(dxdf$oralrx==1) + rbinom(dxdf$oralrx==0,1,0)*(dxdf$oralrx==0)
-dxdf$rxstatin =  (as.numeric(dxdf$statin)-1)*(dxdf$statin==1) + rbinom(dxdf$statin==0,1,0)*(dxdf$statin==0)
-controlled = rbinom(dim(dxdf)[1],1,(sum(dxdf$sbp<130 & dxdf$dbp<80 & dxdf$bprx==1)/(dim(dxdf)[1])))
-controlledbg = rbinom(dim(dxdf)[1],1,2.42*(sum((dxdf$a1c<=7 | dxdf$fbg<7) & dxdf$oralrx==1))/(dim(dxdf)[1]))
+dxdf$rxbp =  dxdf$bprx*(dxdf$bprx==1) + rbinom(dxdf$bprx==0,1,0)*(dxdf$bprx==0) #0.041
+dxdf$rxdm =  dxdf$oralrx*(dxdf$oralrx==1) + rbinom(dxdf$oralrx==0,1,0.075)*(dxdf$oralrx==0) #.075
+dxdf$rxstatin =  (as.numeric(dxdf$statin)-1)*(dxdf$statin==1) + rbinom(dxdf$statin==0,1,0)*(dxdf$statin==0) #.013
+controlled = rbinom(dim(dxdf)[1],1,(sum(dxdf$sbp<130 & dxdf$dbp<80 & dxdf$bprx==1)/(dim(dxdf)[1]))) #0.1+
+controlledbg = rbinom(dim(dxdf)[1],1,(sum((dxdf$a1c<=7 | dxdf$fbg<7) & dxdf$oralrx==1))/(dim(dxdf)[1]))#0.1+
 
+prop.table(table(dxdf$bprx,dxdf$rxbp),2)
+prop.table(table(dxdf$oralrx,dxdf$rxdm),2)
+prop.table(table(dxdf$statin,dxdf$rxstatin),2)
 
 prop.table(table(dxdf$rxstatin,(dxdf$age>=40 & dxdf$cvdrisk>20)),2)
-prop.table(table(((dxdf$sbp_avg<130 & dxdf$dbp_avg<80) & dxdf$rxbp==1),dxdf$rxbp),2)
+prop.table(table(((dxdf$sbp_avg<130 & dxdf$dbp_avg<80) & dxdf$bprx==1),dxdf$bprx),2)
 
 
 
 bpeff = 1*(controlled==1)*3*8.8 +  0.25*(controlled==0)*4*8.8 #1 med for uncontrolled vs 3 for controlled
+dxdf$newsbp = dxdf$sbp
 dxdf$newsbp[(dxdf$sbp>=130)] = 130*controlled[dxdf$sbp>=130] + (dxdf$sbp[dxdf$sbp>=130]-bpeff[dxdf$sbp>=130])*(1-controlled[dxdf$sbp>=130])
 dxdf$newsbp[(dxdf$sbp<130)] = dxdf$sbp[(dxdf$sbp<130)]
 dxdf$newsbp[(dxdf$sbp>=130) & (dxdf$newsbp<130)] = 130
 dxdf$deltasbp = (dxdf$newsbp - dxdf$sbp)
 #dxdf$deltasbp[dxdf$deltasbp<(-8.8*4)]=(-8.8*4)
+
+
 
 dxdf$newa1c = dxdf$a1c
 dxdf$newa1c[dxdf$a1c>7] = 7*controlledbg[dxdf$a1c>7] + (dxdf$a1c[dxdf$a1c>7]-1.5)*(1-controlled[dxdf$a1c>7]) # 1.5% impact of 1 med

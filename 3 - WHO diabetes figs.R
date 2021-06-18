@@ -1,6 +1,6 @@
 # WHO diabetes plots
 
-setwd("~/Downloads/Results matrices")
+setwd("~/Downloads/rstudio-export")
 
 library(tidyverse)
 library(ggplot2)
